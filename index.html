@@ -414,7 +414,12 @@ function compute(name,day,month,year,curY){
   push('Sứ mệnh',chk(mRS));push('Linh hồn',chk(sRaw));
   push('Nhân cách',chk(pRaw));push('Trưởng thành',chk(lpVal+mVal));
   const pyVal=red(sumD(day)+sumD(month)+sumD(curY),false);
-  return{lifePath:lpVal,soul:sVal,mission:mVal,bridge:Math.abs(lpVal-mVal),
+  // Bridge: nếu đường đời hoặc sứ mệnh là master number thì rút gọn về 1 chữ số trước khi tính
+  const MASTER_REDUCE={11:2,22:4,33:6};
+  const lpForBridge=MASTER_REDUCE[lpVal]||lpVal;
+  const mForBridge=MASTER_REDUCE[mVal]||mVal;
+  const bridgeVal=Math.abs(lpForBridge-mForBridge);
+  return{lifePath:lpVal,soul:sVal,mission:mVal,bridge:bridgeVal,
     balance:bVal,missing:miss,maturity:matVal,karmicDebt:kE,personalYear:pyVal};
 }
 
