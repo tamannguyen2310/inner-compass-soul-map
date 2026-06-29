@@ -10,6 +10,34 @@
   gtag('js', new Date());
   gtag('config', 'G-22EYVFZ8FN');
 </script>
+<script>
+// ── OWNER MODE: bấm 5 lần vào title để bật/tắt ──
+// Khi bật: GA không đếm lượt truy cập của chị
+(function(){
+  var _tapCount=0,_timer=null;
+  var _isOwner=localStorage.getItem('lbnt_owner')==='1';
+  if(_isOwner){
+    window['ga-disable-G-22EYVFZ8FN']=true;
+    console.log('🔒 Owner mode ON – GA disabled');
+  }
+  function _handleTap(){
+    _tapCount++;
+    clearTimeout(_timer);
+    _timer=setTimeout(function(){_tapCount=0;},2000);
+    if(_tapCount>=5){
+      _tapCount=0;
+      _isOwner=!_isOwner;
+      localStorage.setItem('lbnt_owner',_isOwner?'1':'0');
+      window['ga-disable-G-22EYVFZ8FN']=_isOwner;
+      alert(_isOwner?'🔒 Owner mode BẬT\nGA sẽ không đếm lượt truy cập của chị.':'🔓 Owner mode TẮT\nGA đang đếm bình thường.');
+    }
+  }
+  document.addEventListener('DOMContentLoaded',function(){
+    var els=document.querySelectorAll('.owner-trigger');
+    els.forEach(function(el){el.addEventListener('click',_handleTap);});
+  });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>La Bàn Nội Tâm</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -61,7 +89,23 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 .ov-gold-line{height:1px;width:32px;background:var(--gold)}
 .ov-sparkle{font-size:12px;color:var(--gold)}
 .ov-title{font-family:'Cormorant Garamond',serif;font-size:clamp(14px,4vw,20px);font-weight:700;color:var(--navy);letter-spacing:1.5px;text-transform:uppercase;white-space:nowrap}
-.ov-hint{font-size:12px;color:var(--mist);text-align:center;margin-bottom:22px}
+.ov-hint{font-size:12px;color:var(--mist);text-align:center;margin-bottom:22px;display:flex;align-items:center;justify-content:center;gap:8px}
+.touch-hint-wrap{position:relative;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0}
+.touch-finger{font-size:18px;position:relative;z-index:2;animation:finger-tap 1.8s ease-in-out infinite;display:inline-block}
+@keyframes finger-tap{
+  0%,100%{transform:translateY(0) scale(1)}
+  40%{transform:translateY(3px) scale(.92)}
+  55%{transform:translateY(0) scale(1)}
+}
+.touch-ripple{position:absolute;border-radius:50%;background:rgba(201,169,110,.35);animation:ripple-out 1.8s ease-out infinite}
+.touch-ripple.r1{width:14px;height:14px;animation-delay:0.4s}
+.touch-ripple.r2{width:22px;height:22px;animation-delay:0.55s}
+.touch-ripple.r3{width:32px;height:32px;animation-delay:0.7s}
+@keyframes ripple-out{
+  0%{transform:scale(0);opacity:.8}
+  80%{opacity:0}
+  100%{transform:scale(1);opacity:0}
+}
 .cards-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;max-width:560px;margin:0 auto 18px}
 @media(min-width:700px){.cards-grid{grid-template-columns:repeat(auto-fit,minmax(160px,1fr));max-width:800px}}
 .ind-card{background:var(--white);border:1.5px solid var(--gold-light);border-radius:20px;padding:18px 8px 14px;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;transition:transform .25s,box-shadow .25s,border-color .25s;box-shadow:0 2px 10px rgba(201,169,110,.10);position:relative;min-height:148px;opacity:0;transform:translateY(14px)}
@@ -178,7 +222,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
 
 /* Karmic */
 .karmic-entry{background:linear-gradient(135deg,#FEF9F0,#FDF4F4);border:1px solid var(--gold-light);border-radius:14px;padding:18px;margin-bottom:12px}
-.karmic-num{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700;color:var(--gold2);margin-bottom:2px}
+.karmic-num{font-family:'DM Sans',sans-serif;font-size:24px;font-weight:700;color:var(--gold2);margin-bottom:2px;font-variant-numeric:tabular-nums lining-nums;letter-spacing:-0.5px}
 .karmic-loc{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--bark);margin-bottom:12px}
 .lesson-lbl{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;color:var(--rose)}
 .lesson-lbl.grad{color:var(--gold2)}
@@ -245,7 +289,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
       <button class="btn-primary" onclick="doCalculate()">Tính chỉ số</button>
       <button class="btn-outline" onclick="clearInputs()">Nhập lại</button>
     </div>
-    <p style="text-align:center;font-size:11px;color:var(--mist);margin-top:28px;letter-spacing:.5px;">©️ Copyright A.N.T</p>
+    <p class="owner-trigger" style="text-align:center;font-size:11px;color:var(--mist);margin-top:28px;letter-spacing:.5px;cursor:default;user-select:none;">©️ Copyright A.N.T</p>
   </div>
 </div>
 
@@ -264,7 +308,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);m
       <span class="ov-sparkle">✦</span>
       <div class="ov-gold-line"></div>
     </div>
-    <p class="ov-hint">👆 Chạm vào từng chỉ số để khám phá La Bàn Nội Tâm của bạn.</p>
+    <div class="ov-hint">
+      <span class="touch-hint-wrap">
+        <span class="touch-ripple r1"></span>
+        <span class="touch-ripple r2"></span>
+        <span class="touch-ripple r3"></span>
+        <span class="touch-finger">👆</span>
+      </span>
+      Chạm vào từng chỉ số để khám phá La Bàn Nội Tâm của bạn.
+    </div>
     <div class="cards-grid" id="cards-grid"></div>
     <div class="ov-bottom-note">💡 Mỗi chỉ số là một mảnh ghép của La Bàn Nội Tâm giúp bạn thấu hiểu bản thân sâu sắc hơn.</div>
   </div>
@@ -372,10 +424,10 @@ const MEANING_TEXT={
   mission:"Chỉ số Sứ mệnh cho thấy lý do bạn có mặt trên đời — con đường bạn cần đi và giá trị bạn cần mang lại cho thế giới xung quanh. Đây là kim chỉ nam định hướng sự nghiệp, mục đích sống và cách bạn đóng góp cho cộng đồng.",
   bridge:"Chỉ số Liên kết (Cầu nối) cho thấy bài học bạn cần học để kết nối Đường đời và Sứ mệnh với nhau. Đây là chiếc cầu giúp bạn dung hòa giữa con người thực tế và con người lý tưởng của mình.",
   balance:"Chỉ số Cân bằng nói lên cách bạn đối diện với vấn đề nghịch cảnh, khó khăn, thử thách trong cuộc sống. Đây là chỉ số hướng dẫn ta cách tốt nhất để đối diện với khó khăn nghịch cảnh, cách ứng xử với trở ngại, thử thách.",
-  missing:"Những con số thiếu trong tên của bạn cho thấy các năng lượng chưa được phát triển đầy đủ trong kiếp sống này. Đây là những bài học quan trọng mà bạn cần rèn luyện để hoàn thiện bản thân.",
+  missing:"Chỉ số Thiếu nói đến những đặc điểm và năng lực mà bẩm sinh chúng ta chưa có khi đến với cuộc đời này. Biết được chỉ số này sẽ giúp bạn rèn luyện và phát triển những phẩm chất đó, góp phần cải thiện chất lượng cuộc sống cũng như sự nghiệp của bạn.",
   maturity:"Chỉ số Trưởng thành tiết lộ tiềm năng lớn nhất của bạn sẽ nở rộ ở nửa sau cuộc đời — thường sau tuổi 35–40. Đây là đỉnh cao bạn có thể đạt được khi đã tích lũy đủ trải nghiệm và bản lĩnh.",
   karmic:"Chỉ số Bài học (Nợ nghiệp) là những thử thách đặc biệt mà linh hồn bạn mang từ kiếp trước sang. Tốt nghiệp được những bài học này sẽ giúp bạn giải phóng nghiệp lực và tiến hóa mạnh mẽ.",
-  py:"Chỉ số Năm cá nhân cho bạn biết chủ đề năng lượng của năm hiện tại — những gì nên làm, nên tránh và thông điệp chính mà vũ trụ gửi đến bạn trong năm này.",
+  py:"Theo năng lượng số Pythagoras, cuộc sống của chúng ta vận hành theo chu kỳ 9 năm. Mỗi năm mang theo một nguồn năng lượng riêng biệt, định hình những gì ta nên TẬP TRUNG – HẠN CHẾ – và TIN TƯỞNG để gieo/ gặt theo đúng mùa vụ của mình. Dưới đây là tổng hợp kế hoạch hành động cho Năm cá nhân của bạn trong năm nay.",
 };
 
 const BANNER_SUB={
@@ -482,13 +534,132 @@ const BAL_M={
   vaccine:["Kết hợp bài học từ cả vacxin số 2 và số 4","Bước ra khỏi vùng an toàn","Linh hoạt và nói ra những điều mình nghĩ"]
 }
 };
-const MISS_M={1:"Thiếu tự chủ và quyết đoán — cần học làm chủ và dám lựa chọn.",2:"Thiếu nhạy cảm và hợp tác — cần học lắng nghe và đồng cảm.",3:"Thiếu biểu đạt và niềm vui — cần học chia sẻ và tin vào bản thân.",4:"Thiếu kỷ luật và nền móng — cần học chăm chỉ, có hệ thống.",5:"Thiếu linh hoạt và can đảm trải nghiệm — cần học bước ra vùng an toàn.",6:"Thiếu trách nhiệm và yêu thương — cần học chăm sóc và cam kết.",7:"Thiếu chiều sâu và trí tuệ — cần học chiêm nghiệm và đi sâu.",8:"Thiếu quản trị nguồn lực — cần học làm chủ tài chính và quyền lực.",9:"Thiếu lòng vị tha — cần học cho đi và phụng sự."};
+const MISS_M={
+1:{
+  skills:["Độc lập và có trách nhiệm với cuộc sống của mình","Can đảm và sẵn sàng nắm bắt những cơ hội mới","Lý trí, nghị lực và chịu được áp lực cao","Quyết đoán và có mục tiêu rõ ràng","Lãnh đạo bản thân và người khác"],
+  practice:["Phát triển lòng tự tin, tinh thần độc lập cũng như rèn luyện khả năng nhận thức bản thân và ra quyết định","Tìm một người cố vấn đáng tin cậy để nâng cao khả năng lãnh đạo và tự lãnh đạo","Bước ra khỏi vùng an toàn, chủ động làm chủ cuộc đời và đưa bản thân vào kỷ luật","Tự tạo năng lượng tích cực cho bản thân, kiểm soát cảm xúc và hành động của mình","Chấp nhận cá tính của mình và dám bước đi theo lựa chọn của bản thân dù không được tất cả mọi người ủng hộ"]
+},
+2:{
+  skills:["Khả năng lắng nghe, đồng cảm và chia sẻ","Kết nối sâu sắc và chân thành với người khác","Tôn trọng sự khác biệt của mỗi người","Giao tiếp khéo léo và tinh tế","Công bằng và hòa giải mâu thuẫn"],
+  practice:["Yêu thương, bao dung và thấu hiểu bản thân","Rèn luyện khả năng lắng nghe và phân tích vấn đề khách quan, đa chiều","Đặt bản thân vào tình thế của mọi người để cảm thông và kết nối","Học cách xây dựng mối quan hệ dựa trên sự tin tưởng và chân thật","Phát triển khả năng truyền đạt và tư duy hướng đến lợi ích chung"]
+},
+3:{
+  skills:["Tinh thần lạc quan và tích cực trong cuộc sống","Nhiệt tình, hài hước và năng lượng cao","Giao tiếp linh hoạt, khéo léo và thu hút","Thông minh và có trí tưởng tượng phong phú","Truyền cảm hứng cho người khác bằng ngôn từ"],
+  practice:["Học cách quản trị và điều tiết cảm xúc","Nuôi dưỡng niềm tin và sự lạc quan trong cuộc sống","Tiếp xúc với nhiều người có nguồn năng lượng tích cực","Tự tạo nhiều hoạt động thú vị, mang lại niềm vui","Cải thiện kỹ năng giao tiếp như lắng nghe chủ động và diễn đạt rõ ràng"]
+},
+4:{
+  skills:["Kỷ luật và theo đuổi mục tiêu đến cùng","Chăm chỉ, cẩn thận và tỉ mỉ","Ổn định, chắc chắn và đáng tin cậy","Khả năng lập kế hoạch rõ ràng và khả thi","Tinh thần học hỏi và phát triển không ngừng"],
+  practice:["Đặt ra kế hoạch rõ ràng và có đầu mục công việc cụ thể","Rèn luyện bản thân trong môi trường mang tính kỷ luật","Làm việc với sự cam kết và chỉn chu","Tăng cường kiến thức và kỹ năng chuyên môn","Nâng cao khả năng ra quyết định và kiên định với mục tiêu"]
+},
+5:{
+  skills:["Khả năng thích nghi linh hoạt với thay đổi","Tinh thần tự do đi kèm trách nhiệm","Trải nghiệm, khám phá và học hỏi từ thực tế","Giao tiếp cởi mở, kết nối đa dạng","Dũng cảm đổi mới và bước qua giới hạn bản thân"],
+  practice:["Thử những trải nghiệm mới trong phạm vi an toàn","Rèn luyện tính linh hoạt nhưng vẫn giữ kỷ luật","Học kỹ năng quản trị rủi ro trước khi quyết định","Mở rộng các mối quan hệ và góc nhìn","Cân bằng giữa tự do cá nhân và trách nhiệm"]
+},
+6:{
+  skills:["Sự gắn kết với gia đình","Sống ôn hòa, nhẹ nhàng và tình cảm","Lòng nhân ái, vị tha và rộng lượng","Khả năng chăm sóc và giúp đỡ mọi người","Trách nhiệm cao và sẵn sàng hy sinh vì người khác"],
+  practice:["Nâng cao khả năng đồng cảm và kết nối","Dành thời gian cho gia đình","Cân bằng trách nhiệm gia đình và sự nghiệp","Quan tâm người khác từ hành động nhỏ","Mở rộng trái tim và cho đi bằng tình yêu thương"]
+},
+7:{
+  skills:["Tư duy logic và phân tích sâu","Khả năng tập trung, ghi nhớ và nghiên cứu","Chiêm nghiệm và tu dưỡng bản thân","Niềm tin và đức tin đúng đắn","Tầm nhìn xa và tư duy chiến lược"],
+  practice:["Nâng cao khả năng tự học","Quan sát và phân tích cốt lõi vấn đề","Thực hành các quy luật vận hành","Tự đánh giá khách quan","Phát triển tư duy chiến lược"]
+},
+8:{
+  skills:["Tư duy quản trị, tổ chức và điều hành","Năng lực quản lý tài chính và nguồn lực","Bản lĩnh, quyết đoán trong công việc","Khả năng tạo giá trị vật chất bền vững","Tinh thần trách nhiệm và chính trực"],
+  practice:["Rèn luyện kỹ năng quản lý tài chính cá nhân","Học lập kế hoạch và phân bổ nguồn lực","Thực hành ra quyết định trên dữ liệu","Rèn bản lĩnh trước áp lực và thử thách","Theo đuổi thành công gắn với đạo đức và giá trị bền vững"]
+},
+9:{
+  skills:["Lòng từ bi, trắc ẩn và yêu thương","Cảm thông với hoàn cảnh khó khăn","Giúp đỡ vô điều kiện","Trách nhiệm và lý tưởng sống cao đẹp","Chia sẻ và đào tạo kiến thức"],
+  practice:["Mở rộng lòng bao dung","Tăng cường sức mạnh thể chất và tinh thần","Tham gia hoạt động thiện nguyện","Trau dồi đức tính tốt đẹp","Dũng cảm bước khỏi vùng an toàn"]
+}
+};
 const KAR_M={13:{title:"Chỉ số bài học 13/4",easy:["Sự trì hoãn và thiếu nỗ lực khi thực hiện công việc.","Không đặt ra mục tiêu đủ lớn cho bản thân.","Ỷ lại và không phấn đấu để hướng tới thành công.","Đùn đẩy công việc cho người khác.","Mưu mẹo và không trung thực."],grad:["Cần tiết chế và có chừng mực khi tiếp cận các khía cạnh trong cuộc sống.","Học cách vượt lên trên những cám dỗ.","Sống có tinh thần trách nhiệm.","Cân bằng giữa khát khao tự do với tinh thần gắn bó và cam kết."]},
 14:{title:"Chỉ số bài học 14/5",easy:["Làm việc không có cam kết và bỏ giữa chừng.","Sa đà vào những cám dỗ nên mất dần giá trị bản thân.","Sống buông thả và không có mục tiêu.","Đàm tiếu, nói xấu và vướng vào chuyện thị phi."],grad:["Tiết chế bản thân và đặt ra giới hạn khi tiếp cận các khía cạnh trong cuộc sống.","Học cách vượt lên trên những cám dỗ bằng sự kiên trì và ý chí mạnh mẽ.","Chịu trách nhiệm từ những hành động nhỏ nhất.","Cân bằng giữa khát khao tự do với tinh thần gắn bó và cam kết."]},
 16:{title:"Chỉ số bài học 16/7",easy:["Xu hướng tự cao, tự đại và coi mình là người hiểu biết nhất.","Dễ có thái độ cao ngạo nên thường bị xa lánh.","Thiếu đi sự chung thủy và trân trọng những mối quan hệ.","Đấu tranh tư tưởng quá nhiều và do dự nhiều."],grad:["Đánh giá và hiểu được những giá trị cốt lõi của bản thân.","Học cách vượt qua rào cản của sự tự cao, từ đó đối xử với mọi người trên tinh thần tôn trọng, tin tưởng.","Cởi mở và sẵn sàng đón nhận những điều không ngờ tới trong cuộc sống.","Thành thật và chung thủy trong tình yêu."]},
 19:{title:"Chỉ số bài học 19/1",easy:["Thích tự mình làm mọi thứ mà không cần đến sự giúp đỡ của người khác.","Thích tự mình tách ra khỏi tập thể thay vì kết nối cho mục tiêu chung.","Tự dối lòng rằng mình ổn và không cần người khác quan tâm.","Cái tôi quá cao nên thường ngó lơ nhu cầu và ý kiến của người khác."],grad:["Tôn trọng nhu cầu, cảm nhận và ý kiến của người khác.","Dũng cảm đón nhận sự giúp đỡ của mọi người thay vì cố gắng vật lộn một mình.","Thừa nhận những lỗi sai của bản thân và thấu hiểu người khác.","Tích cực kết nối với những mối quan hệ mới để trưởng thành hơn."]}};
 const MAT_M={1:"• Kiên định bám đuổi mục tiêu đến cùng để bước lên một tầm cao mới.\n• Trau dồi kiến thức đổi mới sáng tạo để chứng minh khả năng của bản thân.\n• Học cách quản trị và lãnh đạo dựa trên cả kết quả và nhân tâm.\n• Cởi mở hơn với ý kiến và thông tin mới để mở rộng kết nối với mọi người xung quanh.",2:"• Tập trung vào xây dựng các mối quan hệ chất lượng.\n• Sống chậm lại để lắng nghe và thấu hiểu chính mình và những người xung quanh.\n• Mở rộng tâm hồn để bao dung và độ lượng với những gì đang diễn ra quanh bạn.\n• Tham gia hoặc tự mình tạo ra những cộng đồng hạnh phúc nơi mọi người được chữa lành.",3:"• Tập trung vào việc xây dựng thương hiệu cá nhân.\n• Nuôi dưỡng sự tự tin và lan tỏa năng lượng tích cực tới mọi người.\n• Tham gia các hoạt động kết nối và mở rộng mối quan hệ với những người thành công.\n• Nâng cao năng lực sử dụng ngôn từ để mỗi lời nói ra đều tạo được sự ảnh hưởng.",4:"• Xây dựng tính kỷ luật, nguyên tắc và đạo đức của riêng mình.\n• Lên kế hoạch chi tiết và kiên định bám đuổi mục tiêu đến cùng.\n• Liên tục trau dồi và phát triển năng lực chuyên môn trong lĩnh vực của bạn.\n• Trang bị kiến thức về đầu tư, tài chính và bất động sản.",5:"• Học cách linh hoạt và sáng tạo để thích nghi với những thay đổi.\n• Chuẩn bị tinh thần và năng lượng để tạo ra những giá trị mới.\n• Tham gia các hoạt động kích hoạt năng lượng để luôn giữ bản thân ở trạng thái tràn sức sống.\n• Trải nghiệm nhiều điều mới mẻ để khơi nguồn cảm hứng sáng tạo.",6:"• Trao đi yêu thương một cách có trí tuệ cho bản thân và những người xung quanh.\n• Quan tâm, chăm sóc và dành thời gian chất lượng bên gia đình.\n• Học cách cân bằng giữa cho và nhận, giữa sự nghiệp và cuộc sống.\n• Trở thành một nhà lãnh đạo kết nối bằng tình yêu thương.",7:"• Học tập và phát triển kiến thức uyên thâm và sâu sắc.\n• Chia sẻ tri thức và nâng tầm trí tuệ cho những người xung quanh.\n• Dành thời gian để chiêm nghiệm và nghiên cứu về bản chất của cuộc đời.\n• Đi sâu vào nội tâm để hiểu điều bản thân thực sự cần theo đuổi.",8:"• Học tập và rèn luyện các kỹ năng quan trọng trong kinh doanh như giao tiếp, đàm phán, ra quyết định.\n• Trang bị kiến thức vững chắc về tài chính và kinh doanh để giảm rủi ro.\n• Xây dựng những mối quan hệ chất lượng và tiềm năng.\n• Hỗ trợ người khác chuyển hóa bản thân và xây dựng cuộc sống tốt hơn.",9:"• Học tập và rèn luyện các kỹ năng liên quan tới con người để giúp mọi người khai tâm, khai tuệ.\n• Chủ động tham gia các hoạt động nhân văn, nhân đạo để gieo hạt tích cực.\n• Cống hiến, phụng sự cho gia đình, dòng họ, cộng đồng và xã hội.\n• Trau dồi vốn ngoại ngữ và nắm bắt cơ hội phát triển ở nước ngoài.",11:"• Tìm kiếm những cộng sự tốt trong cả tình bạn và các mối quan hệ xã hội khác.\n• Phát huy khả năng quan sát, phân tích nhạy bén khi giải quyết các vấn đề.\n• Liên tục phát triển chuyên môn để trao giá trị và truyền cảm hứng tới cộng đồng.\n• Rèn luyện năng lực lãnh đạo 'trong cương có nhu' và kết nối mọi người.",22:"• Xây dựng những dự án, hệ thống hoặc tổ chức tạo ra giá trị lâu dài cho cộng đồng.\n• Rèn luyện tư duy chiến lược, năng lực quản trị và khả năng biến những ý tưởng lớn thành kết quả thực tế.\n• Học cách cân bằng giữa tầm nhìn lớn và những hành động nhỏ, kiên trì từng bước để hiện thực hóa mục tiêu.",33:"• Phát triển trí tuệ cảm xúc và lòng bao dung để truyền cảm hứng, chữa lành và nâng đỡ những người xung quanh.\n• Chia sẻ tri thức, kinh nghiệm và giá trị sống thông qua việc giảng dạy, coaching hoặc dẫn dắt cộng đồng.\n• Học cách yêu thương bằng sự khôn ngoan, biết cân bằng giữa việc cho đi và chăm sóc chính mình."};
-const PY_M={1:"Năm khởi đầu – chủ động – tự dẫn dắt\n\nNên làm: Khởi động dự án mới · Ra quyết định cá nhân quan trọng · Hành động nhanh, làm trước chỉnh sau · Tập trung 1–2 việc cốt lõi\n\nNên tránh: Chần chừ vì chưa hoàn hảo · Chờ người khác dẫn đường · Ôm quá nhiều việc cùng lúc\n\n\"Năm nay, tôi CHỦ ĐỘNG BẮT ĐẦU.\"",2:"Hợp tác – kiên nhẫn – xây nền mối quan hệ\n\nNên làm: Nuôi dưỡng quan hệ quan trọng · Học quản trị cảm xúc · Làm vai trò cầu nối · Rèn sự kiên nhẫn\n\nNên tránh: Nóng vội, ép tiến độ · Quyết định một mình · Nhạy cảm quá mức, tự ái\n\n\"Năm nay, tôi CHỌN HỢP TÁC.\"",3:"Giao tiếp – sáng tạo – lan tỏa năng lượng\n\nNên làm: Nói, viết, chia sẻ và trình bày · Làm nội dung, xây hình ảnh cá nhân · Tham gia hoạt động sáng tạo · Kết nối niềm vui với công việc\n\nNên tránh: Thu mình, ngại thể hiện · Phân tán năng lượng quá nhiều hướng\n\n\"Năm nay, tôi TỎA SÁNG & CHIA SẺ.\"",4:"Kỷ luật – học tập – làm chắc từng bước\n\nNên làm: Lập kế hoạch chi tiết, quy trình rõ ràng · Xây thói quen làm việc bền bỉ mỗi ngày · Củng cố kỹ năng cốt lõi · Tập trung học tập và hoàn thiện chuyên môn\n\nNên tránh: Nhảy việc, đổi hướng liên tục · Đốt giai đoạn · Lười kỷ luật, thiếu nhất quán\n\n\"Năm nay, tôi XÂY CHẮC TỪ GỐC.\"",5:"Thay đổi – mở rộng – trải nghiệm\n\nNên làm: Thay đổi cách làm, môi trường, vai trò · Học kỹ năng mới · Mở rộng mối quan hệ · Dám thử, dám xoay, dám khác\n\nNên tránh: Bám chặt cái cũ · Sợ thay đổi · Phân tán, chạy theo cảm xúc\n\n\"Năm nay, tôi DÁM THAY ĐỔI.\"",6:"Trách nhiệm – gia đình – nuôi dưỡng mối quan hệ\n\nNên làm: Ưu tiên gia đình, mối quan hệ thân thiết · Xây dựng hài hòa trong công việc và đời sống · Nhận trách nhiệm rõ ràng, cam kết\n\nNên tránh: Ôm đồm quá mức · Hy sinh bản thân đến kiệt sức\n\n\"Năm nay, tôi CHĂM SÓC & GẮN KẾT.\"",7:"Chiêm nghiệm – học sâu – tái kết nối nội tâm\n\nNên làm: Học chuyên sâu · Dành thời gian một mình để suy ngẫm · Rà soát lại mục tiêu và niềm tin · Chăm sóc tinh thần, sức khỏe nội tâm\n\nNên tránh: Ép tiến độ, chạy theo kết quả · So sánh, ồn ào xã hội\n\n\"Năm nay, tôi ĐÀO SÂU & HIỂU MÌNH.\"",8:"Thành tựu – quyền lực – hiện thực hóa kết quả\n\nNên làm: Tập trung mục tiêu doanh thu, thăng tiến, thành tựu · Ra quyết định lớn về công việc, kinh doanh · Quản lý tiền bạc và nguồn lực chặt chẽ\n\nNên tránh: Lạm quyền, kiểm soát quá mức · Làm vì cái tôi\n\n\"Năm nay, tôi TẠO RA KẾT QUẢ.\"",9:"Cho đi – lan tỏa giá trị – phụng sự cộng đồng\n\nNên làm: Chia sẻ kiến thức, kinh nghiệm, nguồn lực · Tham gia hoạt động cộng đồng, phụng sự · Hỗ trợ, dẫn dắt, truyền cảm hứng cho người khác · Hoàn tất dự án cũ để chuẩn bị chu kỳ mới\n\nNên tránh: Giữ lại những gì đã đến lúc kết thúc · Tiếc nuối, níu kéo quá khứ\n\n\"Năm nay, tôi CHO ĐI & LAN TỎA GIÁ TRỊ.\""};
+const PY_M={
+1:{
+  emoji:"🌱",
+  subtitle:"Năm khởi đầu – chủ động – tự dẫn dắt",
+  intro:"Nếu năm nay bạn cảm thấy mình không thể chờ đợi và mong muốn được bắt đầu để làm gì đó, rất có thể bạn đang bước vào Năm cá nhân số 1.",
+  focus:["Bắt đầu cái MỚI","Quyết đoán với những lựa chọn của chính mình"],
+  todo:["Khởi động 1 dự án / mục tiêu / vai trò mới","Ra quyết định cá nhân quan trọng (công việc, học tập, thương hiệu)","Hành động nhanh, làm trước, chỉnh sau","Tập trung 1–2 việc cốt lõi"],
+  avoid:["Chần chừ vì chưa hoàn hảo","Chờ người khác dẫn đường","Ôm quá nhiều việc cùng lúc"],
+  mantra:"Năm nay, tôi CHỦ ĐỘNG BẮT ĐẦU."
+},
+2:{
+  emoji:"🌿",
+  subtitle:"Hợp tác – kiên nhẫn – xây nền mối quan hệ",
+  intro:"Không phải lúc nào đi chậm cũng là tụt lại. Có những năm, bạn cần cho mình \"sống chậm\" lại, quay về kết nối với chính mình, để chuẩn bị cho mình một nội tâm vững chắc trước khi hướng ra bên ngoài.",
+  focus:["Xây dựng mối quan hệ","Hợp tác thay vì đơn độc","Đi chậm để đi chắc"],
+  todo:["Nuôi dưỡng quan hệ quan trọng (đối tác, gia đình, đội nhóm)","Học quản trị cảm xúc, lắng nghe, hỗ trợ","Làm vai trò cầu nối","Rèn sự kiên nhẫn và ổn định cảm xúc"],
+  avoid:["Nóng vội, ép tiến độ","Quyết định một mình","Nhạy cảm quá mức, tự ái"],
+  mantra:"Năm nay, tôi CHỌN HỢP TÁC."
+},
+3:{
+  emoji:"🎨",
+  subtitle:"Giao tiếp – sáng tạo – lan tỏa năng lượng",
+  intro:"Nếu bạn thấy mình muốn nói nhiều hơn, viết nhiều hơn, thể hiện nhiều hơn, đó không phải ngẫu nhiên. Hãy cho mình cơ hội được thể hiện cá tính của mình.",
+  focus:["Thể hiện bản thân","Giao tiếp nhiều hơn","Đưa sự sáng tạo ra bên ngoài"],
+  todo:["Nói, viết, chia sẻ và trình bày","Làm nội dung, xây hình ảnh cá nhân","Tham gia hoạt động sáng tạo / cộng đồng","Kết nối niềm vui với công việc"],
+  avoid:["Thu mình, ngại thể hiện","Phân tán năng lượng quá nhiều hướng","Làm việc chỉ vì nghĩa vụ"],
+  mantra:"Năm nay, tôi TỎA SÁNG & CHIA SẺ."
+},
+4:{
+  emoji:"🧱",
+  subtitle:"Kỷ luật – học tập – làm chắc từng bước",
+  intro:"Đây không phải năm bùng nổ nhanh. Mà là năm xây dựng nền móng, tập trung vào chuyên môn, rà soát lại những gì mình vừa trải qua 3 năm đầu, xem chỗ nào cần \"tỉa\", chỗ nào cần \"gieo\" thêm, để chuẩn bị cho những năm vào \"vụ mùa\" phía sau.",
+  focus:["Ổn định & chuẩn hóa","Xây nền móng dài hạn","Làm ít nhưng chắc"],
+  todo:["Lập kế hoạch chi tiết, quy trình rõ ràng","Xây thói quen làm việc bền bỉ mỗi ngày","Củng cố kỹ năng cốt lõi / hệ thống / tài chính","Tập trung vào học tập và hoàn thiện kỹ năng chuyên môn"],
+  avoid:["Nhảy việc, đổi hướng liên tục","Đốt giai đoạn","Lười kỷ luật, thiếu nhất quán"],
+  mantra:"Năm nay, tôi XÂY CHẮC TỪ GỐC."
+},
+5:{
+  emoji:"🌊",
+  subtitle:"Thay đổi – mở rộng – trải nghiệm",
+  intro:"Nếu bạn thấy mình không chịu được sự cũ kỹ, thấy một sự thôi thúc cần thay đổi, thì đó cũng là lúc bạn cần \"tung cánh bay\" trên khoảng trời tự do của mình, bước ra khỏi vùng an toàn và cho bản thân có cơ hội được đổi mới.",
+  focus:["Dịch chuyển & làm mới","Thử nghiệm cái mới","Mở rộng giới hạn bản thân"],
+  todo:["Thay đổi cách làm, môi trường, vai trò","Học kỹ năng mới, trải nghiệm mới","Mở rộng mối quan hệ, cơ hội","Dám thử, dám xoay, dám khác","Xây dựng cộng đồng và chia sẻ giá trị"],
+  avoid:["Bám chặt cái cũ","Sợ thay đổi","Phân tán, chạy theo cảm xúc"],
+  mantra:"Năm nay, tôi DÁM THAY ĐỔI."
+},
+6:{
+  emoji:"❤️",
+  subtitle:"Trách nhiệm – gia đình – nuôi dưỡng mối quan hệ",
+  intro:"Một năm để học bài học: chăm sóc đúng cách, không hi sinh mù quáng.",
+  focus:["Chăm sóc & ổn định","Cân bằng cho và nhận","Gắn kết lâu dài"],
+  todo:["Ưu tiên gia đình, mối quan hệ thân thiết","Xây dựng sự hài hòa trong công việc & đời sống","Nhận trách nhiệm rõ ràng, cam kết","Chăm sóc bản thân và người khác đúng cách"],
+  avoid:["Ôm đồm quá mức","Hy sinh bản thân đến kiệt sức","Né tránh trách nhiệm"],
+  mantra:"Năm nay, tôi CHĂM SÓC & GẮN KẾT."
+},
+7:{
+  emoji:"🔍",
+  subtitle:"Chiêm nghiệm – học sâu – tái kết nối nội tâm",
+  intro:"Không phải năm chạy nhanh. Là năm chậm lại để hiểu mình.",
+  focus:["Chậm lại để hiểu sâu","Đầu tư vào tri thức & nội tâm","Lọc bớt nhiễu bên ngoài"],
+  todo:["Học chuyên sâu (đọc, nghiên cứu, đào tạo)","Dành thời gian một mình để suy ngẫm","Rà soát lại mục tiêu & niềm tin","Chăm sóc tinh thần, sức khỏe nội tâm"],
+  avoid:["Ép tiến độ, chạy theo kết quả","So sánh, ồn ào xã hội","Bỏ qua nhu cầu nghỉ ngơi"],
+  mantra:"Năm nay, tôi ĐÀO SÂU & HIỂU MÌNH."
+},
+8:{
+  emoji:"🏆",
+  subtitle:"Thành tựu – quyền lực – hiện thực hóa kết quả",
+  intro:"Đây là năm tập trung vào hành động để tạo ra kết quả.",
+  focus:["Tạo kết quả rõ ràng","Làm chủ tài chính & sự nghiệp","Dẫn dắt bằng năng lực thực tế"],
+  todo:["Tập trung mục tiêu doanh thu, thăng tiến, thành tựu","Ra quyết định lớn về công việc, kinh doanh","Quản lý tiền bạc, nguồn lực và thời gian chặt chẽ","Dám đứng mũi chịu sào, chịu trách nhiệm cuối cùng"],
+  avoid:["Lạm quyền, kiểm soát quá mức","Làm vì cái tôi","Thiếu minh bạch tài chính"],
+  mantra:"Năm nay, tôi TẠO RA KẾT QUẢ."
+},
+9:{
+  emoji:"🌏",
+  subtitle:"Cho đi – lan tỏa giá trị – phụng sự cộng đồng",
+  intro:"Một năm để khép lại – chia sẻ – trao đi.",
+  focus:["Hoàn tất các dự án","Chia sẻ giá trị đã tích lũy","Đóng góp cho cộng đồng"],
+  todo:["Chia sẻ kiến thức, kinh nghiệm, nguồn lực","Tham gia hoạt động cộng đồng / phụng sự","Hỗ trợ, dẫn dắt, truyền cảm hứng cho người khác","Hoàn tất dự án cũ để chuẩn bị chu kỳ mới"],
+  avoid:["Giữ lại những gì đã đến lúc kết thúc","Chỉ nghĩ cho lợi ích cá nhân","Tiếc nuối, níu kéo quá khứ"],
+  mantra:"Năm nay, tôi CHO ĐI & LAN TỎA GIÁ TRỊ."
+}
+};
 
 // ─── CARD DEFS ───
 const CARD_DEFS=[
@@ -632,8 +803,23 @@ function openDetail(key){
     if(r.missing.length===0){
       interp.innerHTML='<div class="no-data-box"><p class="prose-text">Không có số thiếu — tất cả năng lượng đều hiện diện trong tên của bạn.<\/p><\/div>';
     } else {
-      interp.innerHTML='<div class="tags-wrap">'+r.missing.map(n=>`<span class="tag-miss">${n}<\/span>`).join('')+'<\/div>'+
-        r.missing.map((n,i)=>`${i>0?'<div style="height:16px"><\/div>':''}<div><p style="font-family:Cormorant Garamond,serif;font-size:19px;font-weight:700;color:#D4A5A5;margin-bottom:4px;">Số ${n}<\/p><p class="prose-text" style="font-size:14px;">${MISS_M[n]||''}<\/p><\/div>`).join('');
+      const liMiss=(arr)=>arr.map(i=>`<li style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--ink);line-height:1.6;"><span style="flex-shrink:0;color:var(--gold2);font-weight:600;">·<\/span><span>${i}<\/span><\/li>`).join('');
+      interp.innerHTML=r.missing.map((n,idx)=>{
+          const m=MISS_M[n];
+          if(!m) return '';
+          return `${idx>0?'<div style="height:1px;background:var(--gold-light);margin:28px 0;"><\/div>':''}
+          <div>
+            <h4 style="font-family:'DM Sans',sans-serif;font-size:19px;font-weight:700;color:var(--navy);margin-bottom:16px;letter-spacing:-0.5px;font-variant-numeric:tabular-nums lining-nums;">Thiếu ${n}<\/h4>
+            <div style="background:var(--white);border-radius:14px;padding:18px 20px;margin-bottom:10px;border-left:3px solid var(--rose);">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--rose);margin-bottom:10px;">NHỮNG NĂNG LỰC CẦN TRAU DỒI<\/div>
+              <ul style="list-style:none;">${liMiss(m.skills)}<\/ul>
+            <\/div>
+            <div style="background:var(--teal-bg);border-radius:14px;padding:18px 20px;border-left:3px solid var(--teal);">
+              <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;">CÁCH RÈN LUYỆN NHỮNG KỸ NĂNG NÀY<\/div>
+              <ul style="list-style:none;">${liMiss(m.practice)}<\/ul>
+            <\/div>
+          <\/div>`;
+        }).join('');
     }
   } else if(key==='maturity'){
     interp.innerHTML=`<h3 class="det-interp-title">Số Trưởng Thành ${r.maturity} — Gợi ý cho giai đoạn trưởng thành<\/h3><p class="prose-text">${MAT_M[r.maturity]||''}<\/p>`;
@@ -654,7 +840,41 @@ function openDetail(key){
     }
   } else if(key==='py'){
     const pyN=r.personalYear;
-    interp.innerHTML=`<div class="py-card"><div class="py-big">${pyN}<\/div><div class="py-lbl-txt">NĂM CÁ NHÂN SỐ ${pyN} · ${_curY}<\/div><p class="py-body">${PY_M[pyN]||''}<\/p><\/div>`;
+    const py=PY_M[pyN];
+    if(py){
+      const liList=(arr,icon)=>arr.map(i=>`<li style="display:flex;gap:8px;padding:5px 0;font-size:14px;color:var(--ink);line-height:1.6;"><span style="flex-shrink:0;font-size:15px;">${icon}</span><span>${i}</span></li>`).join('');
+      interp.innerHTML=`
+        <div class="py-card">
+          <div style="display:flex;align-items:flex-start;gap:16px;margin-bottom:16px;">
+            <div style="font-size:56px;line-height:1;font-family:'Cormorant Garamond',serif;font-weight:300;color:var(--gold-light);">${pyN}<\/div>
+            <div>
+              <div style="font-size:10px;letter-spacing:2.5px;text-transform:uppercase;color:var(--mist);margin-bottom:4px;">NĂM CÁ NHÂN · ${_curY}<\/div>
+              <div style="font-size:16px;font-style:italic;color:rgba(250,246,240,.85);line-height:1.4;">${py.emoji} ${py.subtitle}<\/div>
+            <\/div>
+          <\/div>
+          <p style="font-size:14px;color:rgba(250,246,240,.75);line-height:1.75;border-left:2px solid rgba(201,169,110,.45);padding-left:14px;margin-bottom:0;">${py.intro}<\/p>
+        <\/div>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:10px;">
+          <div class="energy-block" style="background:var(--gold-pale);border-left:3px solid var(--gold2);">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);margin-bottom:10px;">🎯 TRỌNG TÂM HÀNH ĐỘNG<\/div>
+            <ul style="list-style:none;">${liList(py.focus,'✔️')}<\/ul>
+          <\/div>
+          <div class="energy-block positive">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px;">✅ HÀNH ĐỘNG NÊN LÀM<\/div>
+            <ul style="list-style:none;">${liList(py.todo,'✔️')}<\/ul>
+          <\/div>
+          <div class="energy-block reversed">
+            <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--rose);margin-bottom:10px;">🚫 HÀNH ĐỘNG NÊN TRÁNH<\/div>
+            <ul style="list-style:none;">${liList(py.avoid,'❌')}<\/ul>
+          <\/div>
+          <div style="background:linear-gradient(135deg,var(--navy),var(--navy-soft));border-radius:16px;padding:20px 22px;text-align:center;">
+            <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:10px;">💬 THÔNG ĐIỆP NĂM NAY<\/div>
+            <p style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--gold-light);font-style:italic;line-height:1.4;">"${py.mantra}"<\/p>
+          <\/div>
+        <\/div>`;
+    } else {
+      interp.innerHTML=`<p class="prose-text">Chưa có dữ liệu luận giải cho số này.<\/p>`;
+    }
   }
   showScreen('s-detail');
 }
