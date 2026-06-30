@@ -381,6 +381,7 @@ const ICONS={
   karmic:`<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/><\/svg>`,
   py:`<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><\/svg>`,
   tdlt:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M8 12h1"/><path d="M15 12h1"/></svg>`,
+  birthDay:`<span style="font-size:20px;line-height:1;">🎁</span>`,
 };
 
 // ─── NUMEROLOGY ENGINE ───
@@ -451,17 +452,22 @@ function compute(name,day,month,year,curY){
   const mForBridge=MASTER_REDUCE[mVal]||mVal;
   const bridgeVal=Math.abs(lpForBridge-mForBridge);
 
-  // ── TDLT: rút gọn tên (firstName) về 1 chữ số, rút gọn ngày sinh về 1 chữ số, rồi cộng 2 số đã rút gọn
-  // Giữ master NẾU tổng của 2 số đã rút gọn = 11, 22, 33
+  // ── TDLT: rút gọn tên (firstName) về 1 chữ số (giữ master nếu xuất hiện),
+  // rút gọn ngày sinh về 1 chữ số (giữ master nếu xuất hiện), rồi cộng 2 số đã rút gọn
+  // Giữ master ở bước cộng cuối NẾU tổng = 11, 22, 33
   const firstName=words.length>0?words[words.length-1]:'';
   const firstNameRaw=firstName.split('').reduce((a,l)=>a+(LV[l]||0),0);
-  const firstNameReduced=redFull(firstNameRaw); // rút gọn tên về 1 chữ số
-  const dayReduced=redFull(day);                // rút gọn ngày sinh về 1 chữ số
-  const tdltRaw=firstNameReduced+dayReduced;     // cộng 2 số đã rút gọn
-  const tdltVal=MASTER.has(tdltRaw)?tdltRaw:redFull(tdltRaw); // giữ master nếu tổng = 11/22/33
+  const firstNameReduced=redMaster(firstNameRaw); // rút gọn tên, giữ master nếu có
+  const dayReduced=redMaster(day);                // rút gọn ngày sinh, giữ master nếu có
+  const tdltRaw=firstNameReduced+dayReduced;       // cộng 2 số đã rút gọn
+  const tdltVal=redMaster(tdltRaw);                // rút gọn lần cuối, giữ master nếu có
+
+  // ── Ngày sinh: lấy DD, chỉ giữ nguyên nếu là 11 hoặc 22, còn lại rút gọn về 1 chữ số
+  const BIRTHDAY_MASTER=new Set([11,22]);
+  const birthDayVal=BIRTHDAY_MASTER.has(day)?day:redFull(day);
 
   return{lifePath:lpVal,soul:sVal,mission:mVal,bridge:bridgeVal,
-    balance:bVal,missing:miss,maturity:matVal,karmicDebt:kE,personalYear:pyVal,tdlt:tdltVal};
+    balance:bVal,missing:miss,maturity:matVal,karmicDebt:kE,personalYear:pyVal,tdlt:tdltVal,birthDay:birthDayVal};
 }
 
 // ─── MEANINGS ───
@@ -476,6 +482,7 @@ const MEANING_TEXT={
   karmic:"Chỉ số Bài học (Nợ nghiệp) là những thử thách đặc biệt mà linh hồn bạn mang từ kiếp trước sang. Tốt nghiệp được những bài học này sẽ giúp bạn giải phóng nghiệp lực và tiến hóa mạnh mẽ.",
   py:"Theo năng lượng số Pythagoras, cuộc sống của chúng ta vận hành theo chu kỳ 9 năm. Mỗi năm mang theo một nguồn năng lượng riêng biệt, định hình những gì ta nên TẬP TRUNG – HẠN CHẾ – và TIN TƯỞNG để gieo/ gặt theo đúng mùa vụ của mình. Dưới đây là tổng hợp kế hoạch hành động cho Năm cá nhân của bạn trong năm nay.",
   tdlt:"Chỉ số Tư duy lý trí hướng ra quyết định cuối cùng của bạn — lớp lõi trong cùng của củ hành. Đôi khi bạn ra quyết định mà không biết vì sao, vì nó ở rất sâu lớp phía trong. Đây là cách tư duy, suy nghĩ trước khi ra quyết định.",
+  birthDay:"Chỉ số ngày sinh là món quà mà bạn được ban tặng khi tới với cuộc đời. Trẻ em thường sống theo chỉ số ngày sinh cho tới năm 6 tuổi, đây là khoảng thời gian vàng để cha mẹ có thể uốn nắn trẻ đi đúng với năng lực ngày sinh để trẻ có một món quà vô giá khi trưởng thành hơn.",
 };
 
 const BANNER_SUB={
@@ -489,13 +496,14 @@ const BANNER_SUB={
   karmic:"Hành trang từ kiếp trước",
   py:"Năng lượng năm hiện tại",
   tdlt:"Cách bạn tư duy khi ra quyết định",
+  birthDay:"Món quà bạn mang theo từ khi sinh ra",
 };
 
 const BANNER_TITLE_MAP={
   lifepath:"Đường đời",soul:"Linh hồn",mission:"Sứ mệnh",
   bridge:"Liên kết",balance:"Cân bằng",missing:"Số thiếu",
   maturity:"Trưởng thành",karmic:"Bài học",py:"Năm cá nhân",
-  tdlt:"Tư Duy Lý Trí",
+  tdlt:"Tư Duy Lý Trí",birthDay:"Ngày Sinh",
 };
 
 const LP_M={1:{title:"ĐƯỜNG ĐỜI 1 – ĐỘC LẬP – LÃNH ĐẠO – QUYẾT LIỆT",s:["Độc lập, tự chủ","Tiên phong, dám làm","Mạnh mẽ, quyết liệt","Năng lực lãnh đạo tốt","Tính mục tiêu cao","Quyết đoán, có chính kiến","Có trách nhiệm","Lý trí, nghị lực, kiên trì","Độc đáo, duy nhất, dẫn đầu","Tinh thần gánh vác"],r:["Phụ thuộc, đổ lỗi, không thể ra quyết định","Né tránh trách nhiệm","Chậm chạp, nhút nhát","Yếu đuối, tự ti, thụ động","Không có mục tiêu, thiếu kiên định","Nhu nhược, do dự, mập mờ"],e:["Kiêu căng, hiếu thắng","Ích kỷ","Thiếu khả năng lắng nghe, thiếu kiên nhẫn","Nóng tính, gia trưởng, áp đặt","Tham công tiếc việc, dễ căng thẳng","Liều lĩnh","Thích chiếm hữu"]},
@@ -775,6 +783,76 @@ const TDLT_M={
 }
 };
 
+// ─── NGÀY SINH DATA (từ docx Bộ luận giải Chỉ số Ngày sinh) ───
+const BIRTHDAY_M={
+1:{portrait:"Tiên phong, độc lập, quyết đoán",
+  gifts:["Chủ động, tự tin và dám bắt đầu.","Ý chí mạnh, thích tự làm và chịu trách nhiệm.","Có xu hướng dẫn dắt người khác."],
+  abilities:["Khởi xướng dự án, lãnh đạo, ra quyết định nhanh.","Tạo ảnh hưởng và truyền động lực.","Tư duy độc lập, giải quyết vấn đề."],
+  caution:"Dễ độc đoán, nóng vội hoặc cái tôi cao khi thiếu lắng nghe.",
+  career:"Quản lý, khởi nghiệp, kinh doanh, trưởng nhóm.",
+  advice:"Học cách lắng nghe và kết hợp sức mạnh tập thể."},
+2:{portrait:"Kết nối, đồng cảm, tinh tế",
+  gifts:["Nhẹ nhàng, kiên nhẫn.","Giỏi lắng nghe và quan tâm người khác.","Khéo léo trong các mối quan hệ."],
+  abilities:["Kết nối, hòa giải.","Làm việc nhóm tốt.","Trực giác và cảm nhận cảm xúc."],
+  caution:"Dễ nhạy cảm, phụ thuộc cảm xúc hoặc ngại xung đột.",
+  career:"Nhân sự, chăm sóc khách hàng, coaching, tư vấn.",
+  advice:"Xây dựng ranh giới lành mạnh và tăng sự tự tin."},
+3:{portrait:"Sáng tạo, lạc quan, truyền cảm hứng",
+  gifts:["Giàu ý tưởng.","Hài hước, tích cực.","Yêu cái đẹp và nghệ thuật."],
+  abilities:["Giao tiếp, biểu đạt.","Viết lách, thuyết trình.","Lan tỏa năng lượng tích cực."],
+  caution:"Dễ phân tán, thiếu kỷ luật hoặc cảm hứng thất thường.",
+  career:"Marketing, truyền thông, giáo dục, nghệ thuật.",
+  advice:"Rèn tính kiên trì để biến ý tưởng thành kết quả."},
+4:{portrait:"Kỷ luật, thực tế, bền bỉ",
+  gifts:["Cẩn thận và chỉn chu.","Trung thực, uy tín.","Đề cao chất lượng."],
+  abilities:["Tổ chức hệ thống.","Phân tích logic.","Tối ưu quy trình."],
+  caution:"Dễ cứng nhắc, cầu toàn hoặc ngại thay đổi.",
+  career:"Tài chính, kế toán, vận hành, kỹ thuật.",
+  advice:"Linh hoạt hơn trước sự thay đổi."},
+5:{portrait:"Tự do, trải nghiệm, năng động",
+  gifts:["Năng lượng cao.","Thích khám phá.","Dũng cảm thử cái mới."],
+  abilities:["Thích nghi nhanh.","Giao tiếp, thuyết phục.","Đa tài."],
+  caution:"Dễ thiếu kiên định hoặc bốc đồng.",
+  career:"Kinh doanh, du lịch, bán hàng, truyền thông.",
+  advice:"Kết hợp tự do với kỷ luật."},
+6:{portrait:"Yêu thương, trách nhiệm, phụng sự",
+  gifts:["Quan tâm gia đình.","Giàu trách nhiệm.","Công bằng và nhân ái."],
+  abilities:["Chăm sóc, hướng dẫn.","Gắn kết tập thể.","Thẩm mỹ và tạo sự hài hòa."],
+  caution:"Dễ ôm việc, kiểm soát hoặc hy sinh quá mức.",
+  career:"Giáo dục, y tế, coaching, thiết kế.",
+  advice:"Biết chăm sóc bản thân trước khi chăm sóc người khác."},
+7:{portrait:"Tri thức, chiêm nghiệm, chiều sâu",
+  gifts:["Ham học hỏi.","Quan sát tốt.","Tiêu chuẩn đạo đức cao."],
+  abilities:["Nghiên cứu.","Phân tích.","Trực giác tốt."],
+  caution:"Dễ khép kín hoặc hoài nghi.",
+  career:"Nghiên cứu, CNTT, phân tích dữ liệu, cố vấn.",
+  advice:"Cân bằng giữa tri thức và trải nghiệm thực tế."},
+8:{portrait:"Tham vọng, bản lĩnh, thành tựu",
+  gifts:["Cá tính mạnh.","Quyết tâm lớn.","Ứng biến linh hoạt."],
+  abilities:["Quản trị.","Lập kế hoạch.","Nắm bắt cơ hội tài chính."],
+  caution:"Dễ quá coi trọng thành tích hoặc kiểm soát.",
+  career:"Điều hành, đầu tư, tài chính, doanh nghiệp.",
+  advice:"Cân bằng vật chất với giá trị con người."},
+9:{portrait:"Bao dung, nhân văn, cống hiến",
+  gifts:["Trách nhiệm.","Nhân ái.","Hào phóng."],
+  abilities:["Lãnh đạo truyền cảm hứng.","Học nhanh.","Truyền thông tốt."],
+  caution:"Dễ lý tưởng hóa hoặc cho đi quá nhiều.",
+  career:"Giáo dục, xã hội, phi lợi nhuận, nghệ thuật.",
+  advice:"Cho đi bằng trí tuệ, không chỉ bằng cảm xúc."},
+11:{portrait:"Khai sáng, trực giác, truyền cảm hứng",
+  gifts:["Trực giác mạnh.","Nhạy cảm tinh tế.","Sống vì giá trị tinh thần."],
+  abilities:["Coaching, cố vấn.","Kết nối chiều sâu.","Truyền cảm hứng."],
+  caution:"Dễ lo âu, quá tải năng lượng hoặc tự nghi ngờ.",
+  career:"Coach, diễn giả, chữa lành, giáo dục.",
+  advice:"Giữ cân bằng cảm xúc và hiện thực hóa tầm nhìn."},
+22:{portrait:"Kiến tạo, tầm nhìn lớn, di sản",
+  gifts:["Tư duy chiến lược.","Kiên định.","Khát vọng tạo giá trị lớn."],
+  abilities:["Xây dựng hệ thống.","Lãnh đạo quy mô lớn.","Biến ý tưởng thành hiện thực."],
+  caution:"Dễ áp lực, ôm đồm hoặc quá cầu toàn.",
+  career:"CEO, nhà sáng lập, kiến trúc hệ thống, lãnh đạo.",
+  advice:"Đi từng bước, xây nền tảng vững chắc cho tầm nhìn lớn."}
+};
+
 // ─── CARD DEFS ───
 const CARD_DEFS=[
   {key:'lifepath',icon:'lifepath',label:'ĐƯỜNG ĐỜI'},
@@ -787,6 +865,7 @@ const CARD_DEFS=[
   {key:'karmic',  icon:'karmic',  label:'BÀI HỌC'},
   {key:'py',      icon:'py',      label:'NĂM CÁ NHÂN'},
   {key:'tdlt',    icon:'tdlt',    label:'TƯ DUY LÝ TRÍ'},
+  {key:'birthDay',icon:'birthDay',label:'NGÀY SINH'},
 ];
 
 // ─── STATE ───
@@ -838,6 +917,7 @@ function buildOverview(){
   el('ov-name').textContent=_name;
   el('ov-dob').textContent=_dob;
   const vals={
+    birthDay:_result.birthDay,
     lifepath:_result.lifePath,soul:_result.soul,mission:_result.mission,
     bridge:_result.bridge,balance:_result.balance,
     missing:fmtMiss(_result.missing),
@@ -879,7 +959,7 @@ function openDetail(key){
   let bannerVal='';
   if(key==='missing'){bannerVal=fmtMiss(r.missing)||'—';}
   else if(key==='karmic'){bannerVal=fmtKar(r.karmicDebt)||'—';}
-  else{const map={lifepath:r.lifePath,soul:r.soul,mission:r.mission,bridge:r.bridge,balance:r.balance,maturity:r.maturity,py:r.personalYear,tdlt:r.tdlt};bannerVal=map[key];}
+  else{const map={lifepath:r.lifePath,soul:r.soul,mission:r.mission,bridge:r.bridge,balance:r.balance,maturity:r.maturity,py:r.personalYear,tdlt:r.tdlt,birthDay:r.birthDay};bannerVal=map[key];}
   const isMas=typeof bannerVal==='number'&&isMaster(bannerVal);
   bannerNumEl.textContent=bannerVal;
   bannerNumEl.className='det-banner-num'+(isMas?' master':'');
@@ -1008,6 +1088,45 @@ function openDetail(key){
         <div class="energy-block" style="background:#F0F7F4;border-left:3px solid var(--teal);">
           <div class="energy-block-title" style="color:var(--teal);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">CÁCH KHẮC PHỤC<\/div>
           <ul style="list-style:none;">${liTd(td.vaccine)}<\/ul>
+        <\/div>`;
+    } else {
+      interp.innerHTML=`<p class="prose-text">Chưa có dữ liệu luận giải cho số này.<\/p>`;
+    }
+  } else if(key==='birthDay'){
+    const bd=BIRTHDAY_M[r.birthDay];
+    const liBd=(arr)=>arr.map(i=>`<li style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--ink);line-height:1.6;"><span style="flex-shrink:0;color:var(--gold2);font-weight:600;">·<\/span><span>${i}<\/span><\/li>`).join('');
+    if(bd){
+      interp.innerHTML=`
+        <div style="background:linear-gradient(135deg,var(--gold-pale),var(--rose-pale));border-radius:16px;padding:20px 22px;margin-bottom:20px;border:1px solid var(--gold-light);">
+          <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold2);margin-bottom:8px;">✨ CHÂN DUNG TỔNG QUAN<\/div>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--navy);font-style:italic;line-height:1.3;">${bd.portrait}<\/p>
+        <\/div>
+
+        <div class="energy-block positive">
+          <div class="energy-block-title pos">🎁 MÓN QUÀ TRONG TÍNH CÁCH<\/div>
+          <ul style="list-style:none;">${liBd(bd.gifts)}<\/ul>
+        <\/div>
+
+        <div class="energy-block" style="background:#EEF3FA;border-left:3px solid var(--navy-soft);">
+          <div class="energy-block-title" style="color:var(--navy-soft);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">💪 NĂNG LỰC TỰ NHIÊN<\/div>
+          <ul style="list-style:none;">${liBd(bd.abilities)}<\/ul>
+        <\/div>
+
+        <div class="energy-block reversed">
+          <div class="energy-block-title neg">⚠️ ĐIỂM CẦN LƯU Ý KHI CHƯA TRƯỞNG THÀNH<\/div>
+          <p style="font-size:14px;color:var(--ink);line-height:1.65;margin:0;">${bd.caution}<\/p>
+        <\/div>
+
+        <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:200px;background:var(--white);border-radius:14px;padding:16px 18px;border:1px solid var(--gold-light);">
+            <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gold2);margin-bottom:8px;">🚀 NGHỀ NGHIỆP PHÙ HỢP<\/div>
+            <p style="font-size:14px;color:var(--ink);line-height:1.6;margin:0;">${bd.career}<\/p>
+          <\/div>
+        <\/div>
+
+        <div style="background:linear-gradient(135deg,var(--navy),var(--navy-soft));border-radius:16px;padding:18px 20px;text-align:center;">
+          <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:8px;">🌱 LỜI KHUYÊN PHÁT TRIỂN<\/div>
+          <p style="font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;color:var(--gold-light);font-style:italic;line-height:1.4;margin:0;">${bd.advice}<\/p>
         <\/div>`;
     } else {
       interp.innerHTML=`<p class="prose-text">Chưa có dữ liệu luận giải cho số này.<\/p>`;
