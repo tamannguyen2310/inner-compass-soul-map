@@ -380,6 +380,7 @@ const ICONS={
   maturity:`<svg viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><rect x="2" y="16" width="4" height="6" rx="1"/><rect x="10" y="11" width="4" height="11" rx="1"/><rect x="18" y="6" width="4" height="16" rx="1"/><\/svg>`,
   karmic:`<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/><\/svg>`,
   py:`<svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/><\/svg>`,
+  tdlt:`<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/><path d="M8 12h1"/><path d="M15 12h1"/></svg>`,
 };
 
 // ─── NUMEROLOGY ENGINE ───
@@ -390,37 +391,77 @@ const KARMIC_SET=new Set([13,14,16,19]);
 function rDia(s){return s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D')}
 function san(n){return rDia(n).toUpperCase().replace(/[^A-Z\s]/g,'').replace(/\s+/g,' ').trim()}
 function sumD(n){return String(n).split('').reduce((a,c)=>a+Number(c),0)}
-function red(n,km=true){while(n>9&&!(km&&MASTER.has(n)))n=sumD(n);return n}
+// Rút gọn hoàn toàn về 1 chữ số, không giữ master
+function redFull(n){while(n>9)n=sumD(n);return n}
+// Rút gọn nhưng giữ master (11/22/33) NẾU xuất hiện ở BẤT KỲ bước rút gọn nào trên đường đi
+function redMaster(n){
+  let cur=n;
+  while(cur>9){
+    if(MASTER.has(cur))return cur;   // dừng lại nếu đang là master
+    cur=sumD(cur);
+  }
+  return cur; // cur<=9 hoặc đã là master từ vòng lặp trên (nhưng vòng while sẽ không chạy nếu cur là master>9, nên check lại)
+}
 function isYV(w,i){if(i===0)return false;const p=w[i-1],nx=w[i+1];if(p&&VOWELS.has(p))return false;if(nx&&VOWELS.has(nx))return false;return true}
 function chk(n){if(KARMIC_SET.has(n))return n;let c=n;while(c>9){const s=sumD(c);if(KARMIC_SET.has(s))return s;c=s;}return null}
 
 function compute(name,day,month,year,curY){
   const cl=san(name),words=cl.split(/\s+/).filter(Boolean);
-  const lpD=red(sumD(day)),lpM=red(sumD(month)),lpY=red(sumD(year));
-  const lpRaw=lpD+lpM+lpY,lpVal=red(lpRaw);
-  const mParts=words.map(w=>({raw:w.split('').reduce((a,l)=>a+(LV[l]||0),0)}));
-  const mRaw=mParts.reduce((a,b)=>a+b.raw,0),mVal=red(mRaw,true);
+
+  // ── Đường đời: rút gọn riêng D/M/Y (giữ master nếu xuất hiện) → cộng lại → rút gọn lần 2 (giữ master)
+  const lpD=redMaster(sumD(day)),lpM=redMaster(sumD(month)),lpY=redMaster(sumD(year));
+  const lpRaw=lpD+lpM+lpY,lpVal=redMaster(lpRaw);
+
+  // ── Sứ mệnh: tổng RAW tất cả chữ cái → check master trực tiếp
+  // Master chỉ giữ nếu tổng raw (chưa rút gọn lần nào) = 11, 22, 33
+  const mRaw=words.reduce((a,w)=>a+w.split('').reduce((b,l)=>b+(LV[l]||0),0),0);
+  const mVal=redMaster(mRaw);
+
+  // ── Linh hồn: tổng RAW tất cả nguyên âm → check master trực tiếp
   let sRaw=0,pRaw=0;
   for(const w of words){for(let i=0;i<w.length;i++){const l=w[i];const iv=l==='Y'?isYV(w,i):VOWELS.has(l);if(iv)sRaw+=(LV[l]||0);else pRaw+=(LV[l]||0);}}
-  const sVal=red(sRaw,true);
-  const bRaw=words.reduce((a,p)=>a+(LV[p[0]]||0),0),bVal=red(bRaw,true);
+  const sVal=redMaster(sRaw);
+
+  // ── Cân bằng: tổng chữ cái đầu mỗi từ → rút gọn về 1 chữ số (KHÔNG giữ master)
+  const bRaw=words.reduce((a,p)=>a+(LV[p[0]]||0),0);
+  const bVal=redFull(bRaw);
+
+  // ── Số thiếu
   const seen=new Set();for(const l of cl.replace(/\s/g,'').split(''))if(LV[l])seen.add(LV[l]);
   const miss=[...Array(9)].map((_,i)=>i+1).filter(n=>!seen.has(n));
-  const matVal=red(lpVal+mVal,true);
-  const mRS=mParts.reduce((a,p)=>a+red(p.raw,false),0);
+
+  // ── Trưởng thành: cộng lpVal + mVal (đã là số đơn hoặc master) → raw → redMaster
+  const matRaw=redFull(lpVal)+redFull(mVal);
+  const matVal=redMaster(matRaw);
+
+  // ── Karmic debt
+  const mRS=words.reduce((a,w)=>a+redFull(w.split('').reduce((b,l)=>b+(LV[l]||0),0)),0);
   const kE=[];
   const push=(loc,n)=>{if(n!==null)kE.push({number:n,location:loc})};
   push('Ngày sinh',chk(day));push('Đường đời',chk(lpRaw));
   push('Sứ mệnh',chk(mRS));push('Linh hồn',chk(sRaw));
-  push('Nhân cách',chk(pRaw));push('Trưởng thành',chk(lpVal+mVal));
-  const pyVal=red(sumD(day)+sumD(month)+sumD(curY),false);
-  // Bridge: nếu đường đời hoặc sứ mệnh là master number thì rút gọn về 1 chữ số trước khi tính
+  push('Nhân cách',chk(pRaw));push('Trưởng thành',chk(matRaw));
+
+  // ── Năm cá nhân
+  const pyVal=redFull(sumD(day)+sumD(month)+sumD(curY));
+
+  // ── Liên kết: rút gọn master về số đơn trước khi tính hiệu
   const MASTER_REDUCE={11:2,22:4,33:6};
   const lpForBridge=MASTER_REDUCE[lpVal]||lpVal;
   const mForBridge=MASTER_REDUCE[mVal]||mVal;
   const bridgeVal=Math.abs(lpForBridge-mForBridge);
+
+  // ── TDLT: rút gọn tên (firstName) về 1 chữ số, rút gọn ngày sinh về 1 chữ số, rồi cộng 2 số đã rút gọn
+  // Giữ master NẾU tổng của 2 số đã rút gọn = 11, 22, 33
+  const firstName=words.length>0?words[words.length-1]:'';
+  const firstNameRaw=firstName.split('').reduce((a,l)=>a+(LV[l]||0),0);
+  const firstNameReduced=redFull(firstNameRaw); // rút gọn tên về 1 chữ số
+  const dayReduced=redFull(day);                // rút gọn ngày sinh về 1 chữ số
+  const tdltRaw=firstNameReduced+dayReduced;     // cộng 2 số đã rút gọn
+  const tdltVal=MASTER.has(tdltRaw)?tdltRaw:redFull(tdltRaw); // giữ master nếu tổng = 11/22/33
+
   return{lifePath:lpVal,soul:sVal,mission:mVal,bridge:bridgeVal,
-    balance:bVal,missing:miss,maturity:matVal,karmicDebt:kE,personalYear:pyVal};
+    balance:bVal,missing:miss,maturity:matVal,karmicDebt:kE,personalYear:pyVal,tdlt:tdltVal};
 }
 
 // ─── MEANINGS ───
@@ -434,6 +475,7 @@ const MEANING_TEXT={
   maturity:"Chỉ số Trưởng thành tiết lộ tiềm năng lớn nhất của bạn sẽ nở rộ ở nửa sau cuộc đời — thường sau tuổi 35–40. Đây là đỉnh cao bạn có thể đạt được khi đã tích lũy đủ trải nghiệm và bản lĩnh.",
   karmic:"Chỉ số Bài học (Nợ nghiệp) là những thử thách đặc biệt mà linh hồn bạn mang từ kiếp trước sang. Tốt nghiệp được những bài học này sẽ giúp bạn giải phóng nghiệp lực và tiến hóa mạnh mẽ.",
   py:"Theo năng lượng số Pythagoras, cuộc sống của chúng ta vận hành theo chu kỳ 9 năm. Mỗi năm mang theo một nguồn năng lượng riêng biệt, định hình những gì ta nên TẬP TRUNG – HẠN CHẾ – và TIN TƯỞNG để gieo/ gặt theo đúng mùa vụ của mình. Dưới đây là tổng hợp kế hoạch hành động cho Năm cá nhân của bạn trong năm nay.",
+  tdlt:"Chỉ số Tư duy lý trí hướng ra quyết định cuối cùng của bạn — lớp lõi trong cùng của củ hành. Đôi khi bạn ra quyết định mà không biết vì sao, vì nó ở rất sâu lớp phía trong. Đây là cách tư duy, suy nghĩ trước khi ra quyết định.",
 };
 
 const BANNER_SUB={
@@ -446,12 +488,14 @@ const BANNER_SUB={
   maturity:"Tiềm năng nửa sau cuộc đời",
   karmic:"Hành trang từ kiếp trước",
   py:"Năng lượng năm hiện tại",
+  tdlt:"Cách bạn tư duy khi ra quyết định",
 };
 
 const BANNER_TITLE_MAP={
   lifepath:"Đường đời",soul:"Linh hồn",mission:"Sứ mệnh",
   bridge:"Liên kết",balance:"Cân bằng",missing:"Số thiếu",
   maturity:"Trưởng thành",karmic:"Bài học",py:"Năm cá nhân",
+  tdlt:"Tư Duy Lý Trí",
 };
 
 const LP_M={1:{title:"ĐƯỜNG ĐỜI 1 – ĐỘC LẬP – LÃNH ĐẠO – QUYẾT LIỆT",s:["Độc lập, tự chủ","Tiên phong, dám làm","Mạnh mẽ, quyết liệt","Năng lực lãnh đạo tốt","Tính mục tiêu cao","Quyết đoán, có chính kiến","Có trách nhiệm","Lý trí, nghị lực, kiên trì","Độc đáo, duy nhất, dẫn đầu","Tinh thần gánh vác"],r:["Phụ thuộc, đổ lỗi, không thể ra quyết định","Né tránh trách nhiệm","Chậm chạp, nhút nhát","Yếu đuối, tự ti, thụ động","Không có mục tiêu, thiếu kiên định","Nhu nhược, do dự, mập mờ"],e:["Kiêu căng, hiếu thắng","Ích kỷ","Thiếu khả năng lắng nghe, thiếu kiên nhẫn","Nóng tính, gia trưởng, áp đặt","Tham công tiếc việc, dễ căng thẳng","Liều lĩnh","Thích chiếm hữu"]},
@@ -667,6 +711,70 @@ const PY_M={
 }
 };
 
+// ─── TDLT DATA (từ PDF Chỉ số Cân bằng) ───
+const TDLT_M={
+1:{
+  strengths:["Độc lập, đã ra quyết định rồi là không thay đổi, không suy nghĩ lại","Đã chia tay là không quay lại","Nhanh, dứt khoát, chắc chắn"],
+  weaknesses:["Cái tôi cao, không biết cách lắng nghe","Cá nhân hóa, khó làm việc nhóm","Cứng đầu, bướng bỉnh","Áp đặt người khác","Đặt kỳ vọng quá cao vào người khác"],
+  vaccine:["\"Xin cho con khiêm hạ đến tận cùng\"","Lắng nghe và ghi nhận giá trị của người khác","Giảm bớt sự nóng nảy, tăng sự nhún nhường","Không nên áp đặt, độc đoán, phê phán"]
+},
+2:{
+  strengths:["Hay do dự, bị phụ thuộc ý kiến của người khác","Thường nghĩ theo hướng tiêu cực và không ra quyết định được, hay để người khác ra quyết định hộ","Hơi an phận, an toàn, hay e sợ, lo sợ"],
+  weaknesses:["Thụ động, cẩn thận quá","Không quyết đoán, hay bị mủi lòng, chịu ấm ức, chịu thiệt về mình","Dễ bị lay động bởi ý kiến của người khác","Nhớ đến điều tiêu cực hơn tích cực","Sợ mất lòng, quá quan tâm người khác nghĩ gì về mình","Suy nghĩ nhiều"],
+  vaccine:["Hãy làm việc đội nhóm","Trang bị kiến thức tốt để kết hợp với trực giác — quyết định nhanh và chính xác hơn","Nói ra những điều mình nghĩ, không quá quan tâm người khác nghĩ gì về mình","Bước ra khỏi vùng an toàn"]
+},
+3:{
+  strengths:["Nhanh, sáng tạo, nhưng theo cảm xúc và có thể dẫn tới chưa nghĩ kĩ","Thường đưa ra giải pháp không ai nghĩ tới, nghĩ ra những cái mới, bất ngờ, khác biệt, độc đáo"],
+  weaknesses:["Khó giữ bí mật","Dễ bị cảm xúc chi phối, làm việc theo cảm hứng","Nóng tính, nói làm người khác đau lòng"],
+  vaccine:["Tìm môi trường có sự tương tác và sáng tạo","Luôn giữ năng lượng tích cực, vui vẻ trước khó khăn","Lắng nghe người khác nhiều hơn","Lập kế hoạch và tập trung vào đó"]
+},
+4:{
+  strengths:["Chắc chắn, an toàn, ổn định, chậm","Suy nghĩ rất nhiều, cân nhắc kỹ","Thường là không ra quyết định"],
+  weaknesses:["Khó tính, kĩ tính, bảo thủ, sống khép kín","Ít nói, trầm mặc","Khó hiểu, khó gần","Khó thay đổi, cứng nhắc, kém linh hoạt","An toàn, nhìn ra mặt trái của vấn đề, sợ rủi ro","Ra quyết định chậm"],
+  vaccine:["Cân bằng công việc, nghỉ ngơi, thư giãn và phục hồi","Tránh để tư duy tiêu cực","Nâng cao kiến thức để tìm ra câu trả lời cho mình và dám thay đổi","Linh hoạt và phá vỡ vùng an toàn của mình"]
+},
+5:{
+  strengths:["Quyết định nhanh và hầu như dựa trên cảm hứng, cảm giác của mình tại thời điểm đấy, thường theo đám đông","Tin vào cảm giác của mình, vui thì quyết không vui thôi, vô tư, có sai cũng thôi"],
+  weaknesses:["Quyết định theo cảm xúc","Đôi khi không giải quyết triệt để vấn đề","Ham vui, dễ mất tập trung","Nhanh chán, không kiên định tới cùng","Hơi ngây thơ, dễ tin người"],
+  vaccine:["Luôn làm chủ cảm xúc của mình","Luôn hướng năng lượng sôi động, đam mê và sáng tạo vào công việc","Giải quyết triệt để các vấn đề xảy ra","Kiên định với mục tiêu đến cùng","Học cách quản trị tài chính"]
+},
+6:{
+  strengths:["Quyết định dựa trên tình cảm và hay hỏi ý kiến người xung quanh (đặc biệt là người thân)","Quyết định trên cảm tình, ưu tiên ai thích thì làm, ưu ai cho người mình thích","Không suy nghĩ nhiều, có tình, có lý là được","Thiên vị cho người mình thích"],
+  weaknesses:["Dễ bị tổn thương nếu bị gây áp lực","Chịu áp lực kém","Không quyết đoán, hay bị mủi lòng","Quan tâm người khác nghĩ gì về mình"],
+  vaccine:["Học cách bao dung và cho đi đúng cách","Yêu thương và cho đi có trí tuệ cũng như kỉ luật","Quản trị cảm xúc","Quyết liệt, mạnh mẽ hơn khi ra quyết định"]
+},
+7:{
+  strengths:["Hay đặt câu hỏi, nghi vấn, hoài nghi, đắn đo","Quyết định rồi xong vẫn hỏi: tại sao mình lại quyết định như vậy","Nếu cảm thấy công việc có lợi ích về tiền bạc thì sẽ quyết định nhanh"],
+  weaknesses:["Lạnh lùng, khó gần","Khó khăn trong làm việc đội nhóm","Tiêu chuẩn cao, khó tính","Hay nhìn vào mặt trái vấn đề","Level thấp nhìn ra mặt trái, rủi ro của vấn đề và sợ không dám hành động"],
+  vaccine:["Học cách chia sẻ với mọi người","Học cách làm việc đội nhóm và cần 1 người bạn tri kỉ","Thực hành bài tập rèn tâm trí: thiền, yoga","Tìm cho mình môi trường tích cực, luôn nâng cao tri thức và tầm hiểu biết của mình"]
+},
+8:{
+  strengths:["Có tính toán, tư duy phân tích, tư duy bằng từ khóa và các khái niệm (khi nhìn nhận vấn đề, sẽ pick ra được từ khóa đặc trưng cho nó)","Có khả năng nhìn xa trông rộng, thực tế, rõ ràng","Phải nhìn thấy lợi ích, đôi khi hơi thực dụng"],
+  weaknesses:["Có những lúc bộp chộp, chọn đúng hơn là chọn hạnh phúc","Ảnh hưởng tới mối quan hệ","Ngang bướng, cái tôi cao, hiếu thắng","Liều lĩnh"],
+  vaccine:["Bình tâm để thấu hiểu người xung quanh","Lắng nghe, bớt tranh cãi, học cách cho đi","Kiên trì, bền bỉ vượt qua thử thách","Năng lực được tối đa khi trải qua nhiều biến cố và mạnh mẽ đứng lên"]
+},
+9:{
+  strengths:["Cả nể, nghĩ cho người khác trước, sẵn sàng chịu thiệt cho bản thân","Nhìn vào bức tranh tổng thể, không nhìn vào chi tiết","Có khả năng nhìn xa trông rộng, lý tưởng hóa, cầu toàn hơn"],
+  weaknesses:["Hay ôm đồm công việc","Quá cầu toàn","Bị cả nể","Hoài niệm quá khứ","Dễ mềm yếu và quan tâm thái quá"],
+  vaccine:["Hãy bước qua những vấn đề tiêu cực của quá khứ — khi thăng hoa đây là con số tạo nên sự khác biệt tích cực cho thế giới","Giữ cho mình tinh thần và tư duy tích cực","Đừng làm thay người khác mà hãy chỉ cách để họ có thể tự giải quyết vấn đề của mình","Luôn là người đứng đầu, đi đầu, dẫn dắt, thủ lĩnh"]
+},
+11:{
+  strengths:["Số 11 lưỡng tính lúc 1, lúc 2","Khả năng đa nhiệm tốt, có thể chạy nhiều luồng suy nghĩ cùng lúc, làm nhiều việc cùng lúc mà vẫn đạt kết quả tốt"],
+  weaknesses:["Mang điểm yếu của cả số 1 và số 2","Cái tôi cao đồng thời hay do dự, không quyết đoán","Khó làm việc nhóm nhưng lại sợ mất lòng"],
+  vaccine:["Kết hợp bài học từ cả vacxin số 1 và số 2","Lắng nghe và ghi nhận giá trị của người khác","Trang bị kiến thức tốt để kết hợp với trực giác"]
+},
+22:{
+  strengths:["Số 22 mang đặc điểm kết hợp của cả số 2 và số 4","Quyết định vừa có tính toán logic, kỹ lưỡng vừa cân nhắc tình cảm, ý kiến người xung quanh","Khi đã ra quyết định thì có nền tảng chắc chắn, ổn định, ít thay đổi"],
+  weaknesses:["Mang điểm yếu của cả số 2 và số 4: vừa do dự, hay bị mủi lòng vừa khó tính, chậm ra quyết định","Suy nghĩ rất nhiều trước khi quyết, dễ bỏ lỡ thời điểm","Khó gần, khó hiểu vì tư duy phức tạp, nhiều lớp"],
+  vaccine:["Kết hợp bài học từ cả vacxin số 2 và số 4","Trang bị kiến thức tốt để kết hợp với trực giác, quyết định nhanh và chính xác hơn","Học cách tin vào bản thân, mạnh mẽ hơn khi ra quyết định","Linh hoạt, phá vỡ vùng an toàn của chính mình"]
+},
+33:{
+  strengths:["Số 33 mang đặc điểm kết hợp của cả số 3 và số 6","Quyết định nhanh, sáng tạo, đồng thời rất coi trọng tình cảm và ý kiến người thân","Dễ tạo thiện cảm, được nhiều người ủng hộ quyết định của mình"],
+  weaknesses:["Mang điểm yếu của cả số 3 và số 6: dễ bị cảm xúc chi phối, nóng tính, lại vừa thiên vị cho người mình thích","Khó giữ bí mật, dễ bị tổn thương nếu chịu áp lực","Không suy nghĩ kỹ, dễ quyết định cảm tính"],
+  vaccine:["Kết hợp bài học từ cả vacxin số 3 và số 6","Học cách quản trị cảm xúc, giữ năng lượng tích cực","Lắng nghe người khác nhiều hơn nhưng không để tình cảm chi phối hoàn toàn","Quyết liệt, mạnh mẽ hơn khi cần đưa ra quyết định cuối cùng"]
+}
+};
+
 // ─── CARD DEFS ───
 const CARD_DEFS=[
   {key:'lifepath',icon:'lifepath',label:'ĐƯỜNG ĐỜI'},
@@ -678,6 +786,7 @@ const CARD_DEFS=[
   {key:'maturity',icon:'maturity',label:'TRƯỞNG THÀNH'},
   {key:'karmic',  icon:'karmic',  label:'BÀI HỌC'},
   {key:'py',      icon:'py',      label:'NĂM CÁ NHÂN'},
+  {key:'tdlt',    icon:'tdlt',    label:'TƯ DUY LÝ TRÍ'},
 ];
 
 // ─── STATE ───
@@ -735,6 +844,7 @@ function buildOverview(){
     maturity:_result.maturity,
     karmic:fmtKar(_result.karmicDebt),
     py:_result.personalYear,
+    tdlt:_result.tdlt,
   };
   const grid=el('cards-grid');
   grid.innerHTML='';
@@ -769,7 +879,7 @@ function openDetail(key){
   let bannerVal='';
   if(key==='missing'){bannerVal=fmtMiss(r.missing)||'—';}
   else if(key==='karmic'){bannerVal=fmtKar(r.karmicDebt)||'—';}
-  else{const map={lifepath:r.lifePath,soul:r.soul,mission:r.mission,bridge:r.bridge,balance:r.balance,maturity:r.maturity,py:r.personalYear};bannerVal=map[key];}
+  else{const map={lifepath:r.lifePath,soul:r.soul,mission:r.mission,bridge:r.bridge,balance:r.balance,maturity:r.maturity,py:r.personalYear,tdlt:r.tdlt};bannerVal=map[key];}
   const isMas=typeof bannerVal==='number'&&isMaster(bannerVal);
   bannerNumEl.textContent=bannerVal;
   bannerNumEl.className='det-banner-num'+(isMas?' master':'');
@@ -877,6 +987,27 @@ function openDetail(key){
             <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:10px;">💬 THÔNG ĐIỆP NĂM NAY<\/div>
             <p style="font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;color:var(--gold-light);font-style:italic;line-height:1.4;">"${py.mantra}"<\/p>
           <\/div>
+        <\/div>`;
+    } else {
+      interp.innerHTML=`<p class="prose-text">Chưa có dữ liệu luận giải cho số này.<\/p>`;
+    }
+  } else if(key==='tdlt'){
+    const td=TDLT_M[r.tdlt];
+    const liTd=(arr)=>arr.map(i=>`<li style="display:flex;gap:8px;padding:4px 0;font-size:14px;color:var(--ink);line-height:1.6;"><span style="flex-shrink:0;color:var(--gold2);font-weight:600;">·<\/span><span>${i}<\/span><\/li>`).join('');
+    if(td){
+      interp.innerHTML=`
+        <h3 class="det-interp-title" style="font-family:'DM Sans',sans-serif;font-size:20px;font-weight:700;font-variant-numeric:tabular-nums lining-nums;">Tư Duy Lý Trí ${r.tdlt}<\/h3>
+        <div class="energy-block positive">
+          <div class="energy-block-title pos">NĂNG LỰC CỐT LÕI — CÁCH TƯ DUY KHI RA QUYẾT ĐỊNH<\/div>
+          <ul style="list-style:none;">${liTd(td.strengths)}<\/ul>
+        <\/div>
+        <div class="energy-block reversed">
+          <div class="energy-block-title neg">NHƯỢC ĐIỂM CẦN KHẮC PHỤC<\/div>
+          <ul style="list-style:none;">${liTd(td.weaknesses)}<\/ul>
+        <\/div>
+        <div class="energy-block" style="background:#F0F7F4;border-left:3px solid var(--teal);">
+          <div class="energy-block-title" style="color:var(--teal);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;">CÁCH KHẮC PHỤC<\/div>
+          <ul style="list-style:none;">${liTd(td.vaccine)}<\/ul>
         <\/div>`;
     } else {
       interp.innerHTML=`<p class="prose-text">Chưa có dữ liệu luận giải cho số này.<\/p>`;
